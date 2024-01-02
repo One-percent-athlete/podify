@@ -1,10 +1,9 @@
-const loader = document.getElementById("loader");
-const container = document.getElementById("container");
-const form = document.getElementById("form");
 const password = document.getElementById("password");
 const confirmPassword = document.getElementById("confirm-password");
+const form = document.getElementById("form");
+const container = document.getElementById("container");
+const loader = document.getElementById("loader");
 const button = document.getElementById("submit");
-
 const error = document.getElementById("error");
 const success = document.getElementById("success");
 
@@ -100,7 +99,8 @@ const handleSubmit = async (event) => {
 
   displaySuccess("Your password had changed successfully!");
   password.value = "";
-  button.innerText = "";
+  // button.innerText = "";
+  confirmPassword.value ="";
 };
 
 form.addEventListener("submit", handleSubmit);

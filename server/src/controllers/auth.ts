@@ -9,22 +9,25 @@ import {
   sendPassResetSuccessEmail,
   sendVerificationMail,
 } from "#/utils/mail";
-import crypyo from "crypto";
 import EmailVerificationToken from "#/models/emailVerificationToken";
-import { isValidObjectId } from "mongoose";
 import PasswordResetToken from "#/models/passwordResetToken";
+import { isValidObjectId } from "mongoose";
+import crypto from "crypto";
 import { JWT_SECRET, PASSWORD_RESET_LINK } from "#/utils/variables";
 import { RequestWithFiles } from "#/middlewear/fileParser";
 import cloudinary from "#/cloud";
-// import formidable from "formidable";
+import formidable from "formidable";
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
-  const { name, email, password } = req.body;
+  const { email, password, name } = req.body;
+
+  const oldUser = await User.findOne({ email });
+  if (oldUser)
+    return res.status(403).json({ error: "Email is already in use." });
 
   const user = await User.create({ name, email, password });
 
   const token = generateToken();
-
   await EmailVerificationToken.create({
     owner: user._id,
     token,
@@ -70,6 +73,9 @@ export const sendReverificationToken: RequestHandler = async (req, res) => {
   const user = await User.findById(userId);
   if (!user) return res.status(403).json({ error: "Invalid request" });
 
+  if (user.verified)
+    return res.status(422).json({ error: "Your account is already verified." });
+
   await EmailVerificationToken.findOneAndDelete({
     onwer: userId,
   });
@@ -100,7 +106,7 @@ export const generateForgetPasswordLink: RequestHandler = async (req, res) => {
     owner: user._id,
   });
 
-  const token = crypyo.randomBytes(36).toString("hex");
+  const token = crypto.randomBytes(36).toString("hex");
 
   await PasswordResetToken.create({
     owner: user._id,
@@ -118,7 +124,7 @@ export const grantValid: RequestHandler = async (req, res) => {
 };
 
 export const updatePassword: RequestHandler = async (req, res) => {
-  const { userId, password } = req.body;
+  const { password, userId } = req.body;
 
   const user = await User.findById(userId);
   if (!user) return res.status(403).json({ error: "Unauthorized access." });
@@ -139,7 +145,7 @@ export const updatePassword: RequestHandler = async (req, res) => {
 };
 
 export const signIn: RequestHandler = async (req, res) => {
-  const { email, password } = req.body;
+  const { password, email } = req.body;
 
   const user = await User.findOne({
     email,
@@ -175,7 +181,7 @@ export const updateProfile: RequestHandler = async (
   res
 ) => {
   const { name } = req.body;
-  const avatar = req.files?.avatar; //as formidable.File;
+  const avatar = req.files?.avatar as unknown as formidable.File;
 
   const user = await User.findById(req.user.id);
   if (!user) throw new Error("Something went wrong, user not found.");
@@ -187,11 +193,11 @@ export const updateProfile: RequestHandler = async (
   user.name = name;
 
   if (avatar) {
-    if (user.avatar?.publicID) {
-      await cloudinary.uploader.destroy(user.avatar?.publicID);
+    if (user.avatar?.publicId) {
+      await cloudinary.uploader.destroy(user.avatar?.publicId);
     }
 
-    const { secure_url, url, public_id } = await cloudinary.uploader.upload(
+    const { secure_url, public_id } = await cloudinary.uploader.upload(
       avatar.filepath,
       {
         width: 300,
@@ -200,7 +206,7 @@ export const updateProfile: RequestHandler = async (
         gravity: "face",
       }
     );
-    user.avatar = { url: secure_url, publicID: public_id };
+    user.avatar = { url: secure_url, publicId: public_id };
   }
   await user.save();
 
@@ -221,9 +227,9 @@ export const logOut: RequestHandler = async (req, res) => {
   const user = await User.findById(req.user.id);
   if (!user) throw new Error("Something went wrong, user not found.");
 
-  if (fromAll === "yes") user.tokens = []
+  if (fromAll === "yes") user.tokens = [];
   else user.tokens = user.tokens.filter((t) => t !== token);
 
   await user.save();
-  res.json({success: true});
+  res.json({ success: true });
 };

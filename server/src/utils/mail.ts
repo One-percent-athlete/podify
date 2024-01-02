@@ -95,7 +95,10 @@ export const sendForgetPasswordLink = async (options: Options) => {
   });
 };
 
-export const sendPassResetSuccessEmail = async (name: string, email: string) => {
+export const sendPassResetSuccessEmail = async (
+  name: string,
+  email: string
+) => {
   const transport = generateMailTranspoter();
 
   transport.sendMail({

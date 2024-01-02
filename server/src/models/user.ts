@@ -7,7 +7,7 @@ export interface UserDocument {
   email: string;
   password: string;
   verified: boolean;
-  avatar?: { url: string; publicID: string };
+  avatar?: { url: string; publicId: string };
   tokens: string[];
   favorites: ObjectId[];
   followers: ObjectId[];
@@ -38,7 +38,7 @@ const userSchema = new Schema<UserDocument, {}, Methods>(
     avatar: {
       type: Object,
       url: String,
-      publicID: String,
+      publicId: String,
     },
     verified: {
       type: Boolean,

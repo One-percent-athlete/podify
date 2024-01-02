@@ -1,8 +1,8 @@
 import { RequestHandler, Request } from "express";
-import formidable, { File } from "formidable";
+import formidable, { Files } from "formidable";
 
 export interface RequestWithFiles extends Request {
-  files?: { [key: string]: File };
+  files?: Files;
 }
 
 const fileParser: RequestHandler = async (req: RequestWithFiles, res, next) => {
@@ -10,28 +10,33 @@ const fileParser: RequestHandler = async (req: RequestWithFiles, res, next) => {
     return res.status(422).json({ error: "Only accepts form data!" });
 
   const form = formidable({ multiples: false });
-  const [fields, files] = await form.parse(req);
+  // const [fields, files] = await form.parse(req);
 
-  for (let key in fields) {
-    const field = fields[key];
-    if (field) {
-      req.body[key] = field[0];
-    }
-  }
+  // for (let key in fields) {
+  //   const field = fields[key];
+  //   if (field) {
+  //     req.body[key] = field[0];
+  //   }
+  // }
 
-  for (let key in files) {
-    const file = files[key];
+  // for (let key in files) {
+  //   const file = files[key];
 
-    if (!req.files) {
-      req.files = {};
-    }
+  //   if (!req.files) {
+  //     req.files = {};
+  //   }
 
-    if (file) {
-      req.files[key] = file[0];
-    }
-  }
+  //   if (file) {
+  //     req.files[key] = file[0];
+  //   }
+  // }
+  form.parse(req, (err, fields, files) => {
+    if (err) return next(err);
 
-  next();
+    req.body = fields;
+    req.files = files;
+    next();
+  });
 };
 
 export default fileParser;

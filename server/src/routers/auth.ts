@@ -1,11 +1,3 @@
-import { Router } from "express";
-import { validate } from "#/middlewear/validator";
-import {
-  CreateUserSchema,
-  SignInValidationSchema,
-  TokenAndIdValidation,
-  UpdatePasswordSchema,
-} from "#/utils/validationSchema";
 import {
   create,
   generateForgetPasswordLink,
@@ -19,6 +11,15 @@ import {
   verifyEmail,
 } from "#/controllers/auth";
 import { isValidPasswordResetToken, mustAuth } from "#/middlewear/auth";
+import { validate } from "#/middlewear/validator";
+import {
+  CreateUserSchema,
+  SignInValidationSchema,
+  TokenAndIdValidation,
+  UpdatePasswordSchema,
+} from "#/utils/validationSchema";
+import { Router } from "express";
+import fileParser from "#/middlewear/fileParser";
 
 const router = Router();
 
@@ -41,21 +42,7 @@ router.post(
 router.post("/sign-in", validate(SignInValidationSchema), signIn);
 router.get("/is-auth", mustAuth, sendProfile);
 
-router.get("/public", (req, res) => {
-  res.json({
-    message: "You are in public page.",
-  });
-});
-router.get("/private", mustAuth, (req, res) => {
-  res.json({
-    message: "You are in private page.",
-  });
-});
-
-import fileParser from "#/middlewear/fileParser";
-
 router.post("/update-profile", mustAuth, fileParser, updateProfile);
-
 router.post("/log-out", mustAuth, logOut);
 
 export default router;
